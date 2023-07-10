@@ -14,36 +14,20 @@ class UserService {
     //회원가입
     async signUp(userInfo) {
         const userRepository = new UserRepository();
-        const { name, nickname, email, password, confirmPassword, TMI } =
+        const {confirmPassword, TMI } =
             userInfo;
+        const email = userInfo.email.trim()
+        const name = userInfo.name.trim()
+        const nickname = userInfo.nickname.trim()
+        const password = userInfo.password.trim()
+
         const userInfos = { name, nickname, email, password, TMI };
         const isolationLevel = Transaction.ISOLATION_LEVELS.READ_COMMITTED;
         const transactionManager = await TransactionManager(sequelize, {
             isolationLevel,
         });
         try {
-            if (!name) {
-                const err = new MakeError(
-                    "name not found",
-                    401,
-                    "name validate err"
-                );
-                throw err;
-            } else if (!email) {
-                const err = new MakeError(
-                    "email not found",
-                    401,
-                    "email validate err"
-                );
-                throw err;
-            } else if (!nickname || !nickname.trim()) {
-                const err = new MakeError(
-                    "nickname not found",
-                    401,
-                    "nickname validate err"
-                );
-                throw err;
-            } else if (!password) {
+            if (!password) {
                 const err = new MakeError(
                     "password not found",
                     401,
