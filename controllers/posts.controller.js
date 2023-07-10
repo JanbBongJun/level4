@@ -1,5 +1,7 @@
+const { ValidationError } = require("sequelize");
 const authMiddleware = require("../middleware/auth.middleware.js");
 const PostService = require("../services/posts.service.js");
+const MakeError = require("../utils/error.utils.js");
 
 // 게시글생성
 class PostController {
@@ -14,8 +16,10 @@ class PostController {
                 .status(200)
                 .json({ message: "게시글을 성공적으로 생성하였습니다" });
         } catch (err) {
-            console.log(err)
+            console.log(err);
             if (err.code === 401) {
+                return res.status(401).json({ message: err.message });
+            } else if (err instanceof ValidationError) {
                 return res.status(401).json({ message: err.message });
             } else if (err.code === 412) {
                 return res.status(412).json({ message: err.message });
@@ -29,23 +33,26 @@ class PostController {
     modifyPost = async (req, res) => {
         const { id } = req.params;
         const userId = res.locals.user.id;
-        const { postTitle, postContent } = req.body;
-
+        const postTitle = req.body.postTitle.trim();
+        const postContent = req.body.postContent.trim();
         try {
             const postService = new PostService();
             await postService.modifyPost(
                 { postTitle, postContent },
-                id,
+                id/1,
                 userId
             );
             return res
                 .status(200)
                 .json({ message: "게시글을 성공적으로 수정하였습니다" });
         } catch (err) {
-            console.log(err)
+            console.log(err);
             if (err.code === 401) {
                 return res.status(401).json({ message: err.message });
-            } else {
+            } else if (err instanceof ValidationError) {
+                return res.status(401).json({ message: err.message });
+            } 
+            else {
                 return res
                     .status(412)
                     .json({ message: "게시글 생성에 실패하였습니다" });
@@ -87,7 +94,7 @@ class PostController {
                 result: posts,
             });
         } catch (err) {
-            console.log(err)
+            console.log(err);
             if (err.code === 401) {
                 return res.status(401).json({ message: err.message });
             } else {
@@ -106,7 +113,7 @@ class PostController {
             const post = await postService.findOnePosts(id);
             return res.status(200).json({ result: post });
         } catch (err) {
-            console.log(err)
+            console.log(err);
             if (err.code === 401) {
                 return res.status(401).json({ message: err.message });
             } else {

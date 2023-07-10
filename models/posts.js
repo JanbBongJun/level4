@@ -50,10 +50,22 @@ module.exports = (sequelize, DataTypes) => {
             postTitle: {
                 allowNull: false,
                 type: DataTypes.STRING,
+                validate: {
+                    len: {
+                        args: [1, 30],
+                        msg: "게시글 제목은 1~30글자로 작성해주세요",
+                    },
+                },
             },
             postContent: {
                 allowNull: false,
                 type: DataTypes.STRING,
+                validate: {
+                    len: {
+                        args: [1, 500],
+                        msg: "게시글 내용은 1~500글자로 작성해주세요",
+                    },
+                },
             },
             viewCount: {
                 allowNull: false,
