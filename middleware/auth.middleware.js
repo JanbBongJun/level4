@@ -16,19 +16,15 @@ const authMiddleware = async (userInfoArr, req, res, next) => {
         }
 
         jwt.verify(refreshToken, tokenKey);
-        const { email } = getAccessTokenPayload(accessToken)
+        getAccessTokenPayload(accessToken);
+
         const userRepository = new UserRepository();
         const user = await userRepository.findOneUser({
-            where: { email },
+            where: { refreshToken },
             attributes: userInfoArr.concat("refreshToken"),
         });
-        
-        if (!user.refreshToken === refreshToken) {
-            res.clearCookie("refreshToken");
-            res.clearCookie("accessToken");
-            return res
-                .status(400)
-                .json({ message: "로그인이 필요한 기능입니다" });
+        if (!user) {
+            throw new Error();
         }
         res.locals.user = user;
         next();
@@ -41,11 +37,11 @@ const authMiddleware = async (userInfoArr, req, res, next) => {
 
 function getAccessTokenPayload(accessToken) {
     try {
-      const payload = jwt.verify(accessToken, tokenKey); // JWT에서 Payload를 가져옵니다.
-      return payload;
+        const payload = jwt.verify(accessToken, tokenKey); // JWT에서 Payload를 가져옵니다.
+        return payload;
     } catch (error) {
-      return null;
+        return null;
     }
-  }
+}
 
 module.exports = authMiddleware;
