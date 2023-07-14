@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const authMiddleware = require("../middleware/auth.middleware.js");
+const {authMiddlewareHTTP} = require("../middleware/auth.middleware.js");
 const PostController = require("../controllers/posts.controller.js");
 const postController = new PostController();
 
@@ -8,7 +8,7 @@ const postController = new PostController();
 router.post(
     "/posts",
     async (req, res, next) => {
-        await authMiddleware(["id"], req, res, next);
+        await authMiddlewareHTTP(["id"], req, res, next);
     },
     postController.createPost
 );
@@ -17,7 +17,7 @@ router.post(
 router.put(
     "/posts/:id",
     async (req, res, next) => {
-        await authMiddleware(["id"], req, res, next);
+        await authMiddlewareHTTP(["id"], req, res, next);
     },
     postController.modifyPost
 );
@@ -26,7 +26,7 @@ router.put(
 router.delete(
     "/posts/:id",
     async (req, res, next) => {
-        await authMiddleware(["id"], req, res, next);
+        await authMiddlewareHTTP(["id"], req, res, next);
     },
     postController.dsetroyPost
 );

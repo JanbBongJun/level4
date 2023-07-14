@@ -1,38 +1,73 @@
 const { DataTypes, Op } = require("sequelize");
-const { Users } = require("../models");
+const { Users, sequelize } = require("../models");
 const PostRepository = require("../repositories/posts.repository.js");
 const MakeError = require("../utils/error.utils.js");
+const Sequelize = require("sequelize");
+const HashTagService = require("../services/hashTags.service.js");
+const hashTagRegex = /#[\dA-Za-zㄱ-ㅎㅏ-ㅣ가-힣]{1,18}/g;
 const {
     TransactionManager,
     Transaction,
 } = require("../services/transactionManager.service.js");
-const Sequelize = require("sequelize");
-const { sequelize } = require("../models");
 
 class PostService {
+    constructor() {
+        this.hashTagService = new HashTagService();
+    }
     //게시글 작성
     createPost = async (postInfo) => {
+        const transactionManager = await TransactionManager(
+            sequelize,
+            Transaction.ISOLATION_LEVELS.READ_UNCOMMITTED
+        );
+        const transaction = transactionManager.getTransaction();
+
         const postRepository = new PostRepository();
         const { userId } = postInfo;
         const postTitle = postInfo.postTitle.trim();
         const postContent = postInfo.postContent.trim();
 
-        const post = await postRepository.createPost({
-            postTitle,
-            postContent,
-            userId,
-        });
-        if (!post) {
-            throw new MakeError(
-                "게시글 생성에 실패하였습니다",
-                412,
-                "failed to post"
+        try{
+            const post = await postRepository.createPost(
+                {
+                    postTitle,
+                    postContent,
+                    userId,
+                },
+                { transaction }
             );
+            if (!post) {
+                throw new MakeError(
+                    "게시글 생성에 실패하였습니다",
+                    412,
+                    "failed to post"
+                );
+            }
+
+            const tagArr = postContent.match(hashTagRegex);
+
+            if (tagArr) {
+                await this.hashTagService.storeTags(
+                    post.id,
+                    tagArr,
+                    transaction
+                );
+            }
+            await transactionManager.commitTransaction();
+            return;
+        }catch(err){
+            await transactionManager.rollbackTransaction()
+            throw err;
         }
-        return;
     };
     //readCommitted
     modifyPost = async (postInfo, id, userId) => {
+        const transactionManager = await TransactionManager(
+            sequelize,
+            Transaction.ISOLATION_LEVELS.READ_UNCOMMITTED
+        );
+        const transaction = transactionManager.getTransaction();
+
         const postRepository = new PostRepository();
         const postTitle = postInfo.postTitle.trim();
         const postContent = postInfo.postContent.trim();
@@ -49,8 +84,10 @@ class PostService {
                 { postTitle, postContent, updatedAt },
                 {
                     where: { [Op.and]: [{ id, userId }] },
+                    transaction,
                 }
             );
+
             if (!updateCount) {
                 throw new MakeError(
                     "게시글 수정에 실패하였습니다",
@@ -58,8 +95,18 @@ class PostService {
                     "update post err"
                 );
             }
+
+            const tagArr = postContent.match(hashTagRegex);
+            if (tagArr) {
+                const tags = tagArr.map((tag)=>{
+                    return tag.trim();
+                })
+                await this.hashTagService.modifyTags(id, tags, transaction);
+            }
+            await transactionManager.commitTransaction()
             return updateCount;
         } catch (err) {
+            await transactionManager.rollbackTransaction();
             throw err;
         }
     };
@@ -128,11 +175,6 @@ class PostService {
         }
     };
     findOnePosts = async (id) => {
-        const CustomTransactionManager = await TransactionManager(
-            sequelize,
-            Transaction.ISOLATION_LEVELS.READ_COMMITTED
-        );
-        const transaction = CustomTransactionManager.getTransaction();
         const postRepository = new PostRepository();
         try {
             if (!id || isNaN(id)) {
@@ -157,6 +199,7 @@ class PostService {
                     attributes: ["nickname"],
                 },
             });
+            console.log(post);
             const returnPost = {
                 id: post.id,
                 postTitle: post.postTitle,
@@ -173,7 +216,6 @@ class PostService {
                 { viewCount: Sequelize.literal("viewCount+1") },
                 {
                     where: { id },
-                    transaction,
                 }
             );
             if (!updateCount) {
@@ -183,10 +225,8 @@ class PostService {
                     "failed add viewCount"
                 );
             }
-            await CustomTransactionManager.commitTransaction();
             return returnPost;
         } catch (err) {
-            await CustomTransactionManager.rollbackTransaction();
             throw err;
         }
     };

@@ -5,16 +5,9 @@ class UsersController {
         const userService = new UserService();
         const { name, nickname, TMI, email, password, confirmPassword } =
             req.body;
-        const userInfo = {
-            name,
-            nickname,
-            TMI,
-            email,
-            password,
-            confirmPassword,
-        };
+
         try {
-            await userService.signUp(userInfo);
+            await userService.signUp({ name, nickname, TMI, email, password, confirmPassword });
             return res
                 .status(200)
                 .json({ message: "회원가입이 완료되었습니다" });
@@ -22,9 +15,7 @@ class UsersController {
             if (err.code === 401) {
                 return res.status(401).json({ message: err.message });
             } else if (err.errors) {
-                console.log(err)
                 let messages = [];
-                let i = 1;
                 err.errors.forEach((err) => {
                     messages.push(err.message)
                 });

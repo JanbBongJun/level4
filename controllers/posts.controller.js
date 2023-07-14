@@ -16,7 +16,6 @@ class PostController {
                 .status(200)
                 .json({ message: "게시글을 성공적으로 생성하였습니다" });
         } catch (err) {
-            console.log(err);
             if (err.code === 401) {
                 return res.status(401).json({ message: err.message });
             } else if (err instanceof ValidationError) {
@@ -37,6 +36,7 @@ class PostController {
         const postContent = req.body.postContent.trim();
         try {
             const postService = new PostService();
+        
             await postService.modifyPost(
                 { postTitle, postContent },
                 id/1,
@@ -46,16 +46,17 @@ class PostController {
                 .status(200)
                 .json({ message: "게시글을 성공적으로 수정하였습니다" });
         } catch (err) {
-            console.log(err);
             if (err.code === 401) {
                 return res.status(401).json({ message: err.message });
             } else if (err instanceof ValidationError) {
                 return res.status(401).json({ message: err.message });
-            } 
+            } else if(err.original.errno ===1452){
+                return res.status(401).json({message:"존재하지 않는 게시글입니다"})
+            }
             else {
                 return res
                     .status(412)
-                    .json({ message: "게시글 생성에 실패하였습니다" });
+                    .json({ message: "게시글 수정에 실패하였습니다" });
             }
         }
     };
@@ -81,8 +82,8 @@ class PostController {
     };
 
     findAllPosts = async (req, res) => {
-        const pageSize = (req.query.pageSize ? req.query.pageSize : 10) / 1;
-        const pageNum = (req.query.pageNum ? req.query.pageNum : 1) / 1;
+        const pageSize = Number(req.query.pageSize ? req.query.pageSize : 10);
+        const pageNum = Number(req.query.pageNum ? req.query.pageNum : 1);
 
         try {
             const postService = new PostService();

@@ -2,13 +2,13 @@ const express = require("express");
 const router = express.Router();
 const CommentController = require("../controllers/comments.controller.js");
 const commentController = new CommentController();
-const authMiddleware = require("../middleware/auth.middleware.js");
+const {authMiddlewareHTTP} = require("../middleware/auth.middleware.js");
 
 //댓글 생성
 router.post(
     "/posts/:postId/comments",
     async (req, res, next) => {
-        await authMiddleware(["id"], req, res, next);
+        await authMiddlewareHTTP(["id"], req, res, next);
     },
     commentController.createComment
 );
@@ -17,7 +17,7 @@ router.post(
 router.put(
     "/posts/:postId/comments/:id",
     async (req, res, next) => {
-        await authMiddleware(["id"], req, res, next);
+        await authMiddlewareHTTP(["id"], req, res, next);
     },
     commentController.modifyComment
 );
@@ -26,7 +26,7 @@ router.put(
 router.delete(
     "/posts/:postId/comments/:id",
     async (req, res, next) => {
-        await authMiddleware(["id"], req, res, next);
+        await authMiddlewareHTTP(["id"], req, res, next);
     },
     commentController.destroyComment
 );

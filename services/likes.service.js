@@ -14,11 +14,10 @@ class LikeService {
         this.likeRepository = new LikeRepository();
         this.postRepository = new PostRepository();
     }
-
+    // Transaction.ISOLATION_LEVELS.READ_COMMITTED
     pressLike = async (userId, postId) => {
         const transactionManager = await TransactionManager(
-            sequelize,
-            Transaction.ISOLATION_LEVELS.READ_COMMITTED
+            sequelize
         );
         const transaction = transactionManager.getTransaction();
         try {

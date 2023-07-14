@@ -27,6 +27,7 @@ module.exports = (sequelize, DataTypes) => {
             },
             tagContent: {
                 allowNull: false,
+                unique:true,
                 type: DataTypes.STRING,
             },
             createdAt: {

@@ -28,6 +28,9 @@ module.exports = (sequelize, DataTypes) => {
                     key: "id",
                 },
                 onDelete: "CASCADE",
+                validate:{
+                    isNumeric:{msg:'잘못된 userId 형식입니다'}
+                }
             },
             roomId: {
                 allowNull: false,
@@ -37,10 +40,16 @@ module.exports = (sequelize, DataTypes) => {
                     key: "id",
                 },
                 onDelete: "CASCADE",
+                validate:{
+                    isNumeric:{msg:'잘못된 roomId 형식입니다'}
+                }
             },
             message: {
                 allowNull: false,
                 type: DataTypes.STRING,
+                validate:{
+                    len:{args:[1,400],msg:"1글자 이상 400글자 이내로 작성해주세요"}
+                }
             },
             createdAt: {
                 allowNull: false,

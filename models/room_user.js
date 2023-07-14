@@ -30,6 +30,9 @@ module.exports = (sequelize, DataTypes) => {
                     key: "id",
                 },
                 onDelete: "CASCADE",
+                validate:{
+                    isNumeric:{msg:'잘못된 userId 형식입니다'}
+                }
             },
             rommId: {
                 allowNull: false,
@@ -39,6 +42,9 @@ module.exports = (sequelize, DataTypes) => {
                     key: "id",
                 },
                 onDelete: "CASCADE",
+                validate:{
+                    isNumeric:{msg:'잘못된 roomId 형식입니다'}
+                }
             },
             createdAt: {
                 allowNull: false,

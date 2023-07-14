@@ -3,68 +3,41 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const MakeError = require("../utils/error.utils.js");
 const { sequelize, Users } = require("../models");
-const {
-    TransactionManager,
-    Transaction,
-} = require("./transactionManager.service.js");
-const tokenKey = "level4";
 
+const tokenKey = "level4";
 
 class UserService {
     //회원가입
     async signUp(userInfo) {
         const userRepository = new UserRepository();
-        const {confirmPassword, TMI } =
-            userInfo;
-        const email = userInfo.email.trim()
-        const name = userInfo.name.trim()
-        const nickname = userInfo.nickname.trim()
-        const password = userInfo.password.trim()
+        const { confirmPassword, TMI } = userInfo;
+        const email = userInfo.email.trim();
+        const name = userInfo.name.trim();
+        const nickname = userInfo.nickname.trim();
+        const password = userInfo.password.trim();
 
         const userInfos = { name, nickname, email, password, TMI };
-        const isolationLevel = Transaction.ISOLATION_LEVELS.READ_COMMITTED;
-        const transactionManager = await TransactionManager(sequelize, {
-            isolationLevel,
-        });
         try {
-            if (!password) {
-                const err = new MakeError(
-                    "password not found",
-                    401,
-                    "password validate err"
-                );
-                throw err;
-            } else if (confirmPassword !== password) {
-                const err = new MakeError(
-                    "password is not correspond",
+            if (confirmPassword !== password) {
+                throw new MakeError(
+                    "패스워드가 일치하지 않습니다",
                     401,
                     "confirmPassword correspond err"
                 );
-                throw { err };
             }
-            
 
-            const transaction = transactionManager.getTransaction();
-            const userOptions = {
-                transaction,
-            }; //validate를 통해서 유효성검사를 진행
-            const user = await userRepository.createUser(
-                userInfos,
-                userOptions
-            );
+            //validate를 통해서 유효성검사를 진행
+            const user = await userRepository.createUser(userInfos);
             if (!user) {
                 const err = new MakeError(
-                    "failed to signUp",
+                    "회원가입에 실패하였습니다",
                     412,
                     "failed to signUp"
                 );
                 throw err;
             }
-            await transactionManager.commitTransaction();
             return;
         } catch (err) {
-            
-            await transactionManager.rollbackTransaction();
             throw err;
         }
     }
@@ -75,7 +48,7 @@ class UserService {
         const { email, password } = authObj;
 
         const error = new MakeError(
-            "로그인 또는 패스워드를 다시 확인해주세요",
+            "이메일 또는 패스워드를 다시 확인해주세요",
             400,
             "authorization err"
         );
@@ -104,7 +77,6 @@ class UserService {
 
             return { accessToken, refreshToken };
         } catch (err) {
-            console.log(err);
             throw err;
         }
     }
